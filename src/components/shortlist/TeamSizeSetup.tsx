@@ -46,7 +46,7 @@ const TeamSizeSetup = ({ onSubmit, onBack }: I_TeamSizeSetupProps) => {
 
   const isValidSize = () => {
     const size = parseInt(inputValue);
-    return !isNaN(size) && size >= 1 && size <= 15;
+    return !isNaN(size) && size >= TEAM_SIZE_CONSTRAINTS.MIN && size <= TEAM_SIZE_CONSTRAINTS.MAX;
   };
 
   return (
@@ -72,6 +72,7 @@ const TeamSizeSetup = ({ onSubmit, onBack }: I_TeamSizeSetupProps) => {
             value={inputValue}
             onChange={handleInputChange}
             placeholder={`Enter team size (${TEAM_SIZE_CONSTRAINTS.MIN}-${TEAM_SIZE_CONSTRAINTS.MAX})`}
+            autoFocus
             required
           />
         </div>

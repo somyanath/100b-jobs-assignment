@@ -9,23 +9,25 @@ import TeamSizeModal from "./TeamSizeModal";
 
 interface I_TeamBuilderProps {
   onCandidateViewDetails: (candidate: I_CandidateWithScore) => void;
+  onReviewTeam?: () => void;
 }
 
 /**
  * Main team building component
  * Manages role selection, candidate filtering, and team assembly
  */
-const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
+const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProps) => {
   const { 
     shortlistedTeam,
     teamSize,
-    addToShortlist,
+    setShortlistedTeam,
     setTeamSize
   } = useAppContext();
   
-  // State management
   const [activeRoleIndex, setActiveRoleIndex] = useState<number>(-1);
   const [showChangeTeamSizeModal, setShowChangeTeamSizeModal] = useState<boolean>(false);
+  const [shouldAutoProgress, setShouldAutoProgress] = useState(false);
+  const [lastSelectedCandidate, setLastSelectedCandidate] = useState<I_CandidateWithScore | null>(null);
   const [roleFilters, setRoleFilters] = useState<I_RoleFilters>({
     skills: [],
     education: [],
@@ -38,30 +40,60 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
     setActiveRoleIndex(firstEmptyRoleIndex);
   }, [shortlistedTeam.length, teamSize]);
 
+  const findNextEmptyRoleIndex = useCallback((team: I_CandidateWithScore[]) => {
+    for (let i = 0; i < teamSize; i++) {
+      if (team[i] === null || team[i] === undefined) {
+        return i;
+      }
+    }
+    return -1; // No empty roles found
+  }, [teamSize]);
+
   // Event handlers
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     if (activeRoleIndex < 0) return;
-
-    // Check if candidate is already selected for another role
+  
+    // Check if candidate is already selected for another role (with null safety)
     const isAlreadySelected = shortlistedTeam.some((teamMember, index) => 
-      teamMember.id === candidate.id && index !== activeRoleIndex
+      teamMember !== null && teamMember.id === candidate.id && index !== activeRoleIndex
     );
     
     if (isAlreadySelected) return;
+    
+    const newTeam = [...shortlistedTeam];
+    while (newTeam.length <= activeRoleIndex) {
+      newTeam.push(null as unknown as I_CandidateWithScore);
+    }
+    newTeam[activeRoleIndex] = candidate;
+    setShortlistedTeam(newTeam);
+    
+    // Reset manual selection flag and trigger auto-progression
+    setShouldAutoProgress(true);
+    setLastSelectedCandidate(candidate);
+  }, [activeRoleIndex, shortlistedTeam, setShortlistedTeam]);
 
-    addToShortlist(candidate);
-    
-    // Auto-progress to next role
-    const nextRoleIndex = shortlistedTeam.length + 1 < teamSize 
-      ? shortlistedTeam.length + 1 
-      : -1;
-    
-    setActiveRoleIndex(nextRoleIndex);
-  }, [activeRoleIndex, shortlistedTeam, teamSize, addToShortlist]);
+  // Auto-progress effect
+  useEffect(() => {
+    if (shouldAutoProgress && lastSelectedCandidate) {
+      const updatedTeam = shortlistedTeam.map((member, index) => 
+        index === activeRoleIndex ? lastSelectedCandidate : member
+      );
+      const nextEmptyRoleIndex = findNextEmptyRoleIndex(updatedTeam);
+      setActiveRoleIndex(nextEmptyRoleIndex);
+      setShouldAutoProgress(false);
+      setLastSelectedCandidate(null);
+    }
+  }, [shouldAutoProgress, lastSelectedCandidate, shortlistedTeam, activeRoleIndex, findNextEmptyRoleIndex]);
 
   const handleFilterChange = useCallback((filters: I_RoleFilters) => {
     setRoleFilters(filters);
   }, []);
+
+  const handleRoleSelect = useCallback((roleIndex: number) => {
+    if (roleIndex < 0 || roleIndex >= teamSize) return;
+    
+    setActiveRoleIndex(roleIndex);
+  }, [teamSize]);
 
   const handleChangeTeamSize = () => {
     setShowChangeTeamSizeModal(true);
@@ -72,9 +104,12 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
     setShowChangeTeamSizeModal(false);
   };
 
-  const isTeamComplete = shortlistedTeam.length === teamSize;
+  const validSelectedCandidates = shortlistedTeam.filter(candidate => candidate !== null);
+  const filledRolesCount = validSelectedCandidates.length;
+  const isTeamComplete = filledRolesCount === teamSize;
   const hasActiveRole = activeRoleIndex >= 0;
   const showFilters = hasActiveRole;
+  const showSelectButtons = !isTeamComplete;
 
   return (
     <div className="w-full min-h-screen max-w-full overflow-x-hidden">
@@ -97,14 +132,14 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
                   </button>
                 </div>
                 <p className="text-sm text-gray-600 mt-1">
-                  {shortlistedTeam.length} of {teamSize} roles filled
+                  {filledRolesCount} of {teamSize} roles filled
                 </p>
               </div>
 
               <div className="p-4">
                 <RoleSlotPanel 
                   activeRoleIndex={activeRoleIndex}
-                  onRoleSelect={setActiveRoleIndex}
+                  onRoleSelect={handleRoleSelect}
                 />
               </div>
             </div>
@@ -125,6 +160,7 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
                   <CandidateFilters 
                     roleFilters={roleFilters}
                     onFilterChange={handleFilterChange}
+                    isVisible={showFilters}
                   />
                 </div>
               </div>
@@ -149,9 +185,9 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
                   </div>
                   <div className="ml-4">
                     <Button
-                      onClick={() => {}}
+                      onClick={onReviewTeam}
                       className="bg-green-600 hover:bg-green-700 text-white"
-                      disabled={false}
+                      disabled={!onReviewTeam}
                     >
                       Review Team
                     </Button>
@@ -175,10 +211,7 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
                     </h2>
                     <p className="text-sm text-gray-600">
                       {activeRoleIndex >= 0 
-                        ? (activeRoleIndex < shortlistedTeam.length 
-                            ? `Replacing candidate for Role ${activeRoleIndex + 1}` 
-                            : `Selecting candidate for Role ${activeRoleIndex + 1}`
-                          )
+                        ? `Selecting candidate for Role ${activeRoleIndex + 1}`
                         : 'All roles have been filled. You can review your team or make changes.'
                       }
                     </p>
@@ -194,6 +227,9 @@ const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
                   roleFilters={roleFilters}
                   onCandidateSelect={handleCandidateSelect}
                   onCandidateViewDetails={onCandidateViewDetails}
+                  showSelectButtons={showSelectButtons}
+                  selectedCandidates={validSelectedCandidates}
+                  activeRoleIndex={activeRoleIndex}
                 />
               </div>
             </div>

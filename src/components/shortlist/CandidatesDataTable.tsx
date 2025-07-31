@@ -149,7 +149,7 @@ const CandidatesDataTable = ({
               variant="outline"
               size="sm"
               onClick={() => handleViewDetails(candidate)}
-              className="flex items-center gap-1"
+              className="flex items-center gap-1 cursor-pointer"
             >
               <Eye className="h-3 w-3" />
               Details
@@ -159,7 +159,7 @@ const CandidatesDataTable = ({
                 variant="default"
                 size="sm"
                 onClick={(e) => handleSelectForTeam(candidate, e)}
-                className="flex items-center gap-1"
+                className="flex items-center gap-1 cursor-pointer"
               >
                 <UserPlus className="h-3 w-3" />
                 Select

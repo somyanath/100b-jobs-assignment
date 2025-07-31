@@ -11,13 +11,14 @@ export interface I_RoleFilters {
 interface I_CandidateFiltersProps {
   roleFilters: I_RoleFilters;
   onFilterChange: (filters: I_RoleFilters) => void;
+  isVisible: boolean;
 }
 
 /**
  * Candidate filters component
  * Provides filtering options for skills, experience, and education
  */
-const CandidateFilters = ({ roleFilters, onFilterChange }: I_CandidateFiltersProps) => {
+const CandidateFilters = ({ roleFilters, onFilterChange, isVisible }: I_CandidateFiltersProps) => {
 
   // make a generic function to handle all the above three functions
   const handleFilterChange = useCallback((filterType: 'skills' | 'experience' | 'education', value: string[]) => {
@@ -29,6 +30,22 @@ const CandidateFilters = ({ roleFilters, onFilterChange }: I_CandidateFiltersPro
   }, [onFilterChange]);
 
   const totalFiltersCount = roleFilters.skills.length + roleFilters.experience.length + roleFilters.education.length;
+
+  if (!isVisible) return null;
+
+  const filters = {
+    skills: { label: 'Skills', keywords: roleFilters.skills, onKeywordsChange: (keywords: string[]) => handleFilterChange('skills', keywords), placeholder: 'e.g., React, Python, JavaScript', inputClassName: 'border-blue-200 focus:border-blue-500' },
+    experience: { label: 'Experience', keywords: roleFilters.experience, onKeywordsChange: (keywords: string[]) => handleFilterChange('experience', keywords), placeholder: 'e.g., Senior, Lead, Manager', inputClassName: 'border-green-200 focus:border-green-500' },
+    education: { label: 'Education', keywords: roleFilters.education, onKeywordsChange: (keywords: string[]) => handleFilterChange('education', keywords), placeholder: 'e.g., Computer Science, Engineering', inputClassName: 'border-purple-200 focus:border-purple-500' },
+  };
+
+  const renderFilters = (filters: { [key: string]: { label: string; keywords: string[]; onKeywordsChange: (keywords: string[]) => void; placeholder: string; inputClassName: string } }) => {
+    return Object.entries(filters).map(([key, value]) => {
+      return <KeywordInput key={key} label={value.label} keywords={value.keywords} onKeywordsChange={value.onKeywordsChange} placeholder={value.placeholder} inputClassName={value.inputClassName} />
+    });
+  };
+
+
 
   return (
     <div className="w-full">
@@ -53,31 +70,8 @@ const CandidateFilters = ({ roleFilters, onFilterChange }: I_CandidateFiltersPro
       </div>
 
       {/* Skills Filter */}
-      <KeywordInput
-        label="Skills"
-        keywords={roleFilters.skills}
-        onKeywordsChange={(keywords) => handleFilterChange('skills', keywords)}
-        placeholder="e.g., React, Python, JavaScript"
-        inputClassName="border-blue-200 focus:border-blue-500"
-      />
-
-      {/* Experience Filter */}
-      <KeywordInput
-        label="Experience"
-        keywords={roleFilters.experience}
-        onKeywordsChange={(keywords) => handleFilterChange('experience', keywords)}
-        placeholder="e.g., Senior, Lead, Manager"
-        inputClassName="border-green-200 focus:border-green-500"
-      />
-
-      {/* Education Filter */}
-      <KeywordInput
-        label="Education"
-        keywords={roleFilters.education}
-        onKeywordsChange={(keywords) => handleFilterChange('education', keywords)}
-        placeholder="e.g., Computer Science, Engineering"
-        inputClassName="border-purple-200 focus:border-purple-500"
-      />
+      {renderFilters(filters)}
+      
     </div>
   );
 }

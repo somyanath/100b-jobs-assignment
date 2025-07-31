@@ -15,7 +15,8 @@ const RoleSlotPanel = ({ activeRoleIndex, onRoleSelect }: I_RoleSlotPanelProps) 
 
   // Determine role state and styling
   const getRoleState = (index: number): T_RoleState => {
-    const isFilled = index < shortlistedTeam.length;
+    const candidate = shortlistedTeam[index];
+    const isFilled = candidate !== null && candidate !== undefined;
     const isActive = index === activeRoleIndex;
     
     if (isFilled && isActive) return 'replacing';
@@ -74,6 +75,7 @@ const RoleSlotPanel = ({ activeRoleIndex, onRoleSelect }: I_RoleSlotPanelProps) 
           const roleState = getRoleState(index);
           const styling = getRoleStyling(roleState);
           const isFilled = roleState === 'filled' || roleState === 'replacing';
+          const candidate = shortlistedTeam[index];
           
           return (
             <Card 
@@ -95,10 +97,10 @@ const RoleSlotPanel = ({ activeRoleIndex, onRoleSelect }: I_RoleSlotPanelProps) 
                 {isFilled && (
                   <div className="mt-2">
                     <div className="text-sm font-medium text-gray-900">
-                      {shortlistedTeam[index].name}
+                      {candidate.name}
                     </div>
                     <div className="text-xs text-gray-500 truncate">
-                      {shortlistedTeam[index].skills.slice(0, 2).join(', ')}
+                      {candidate.skills.slice(0, 2).join(', ')}
                     </div>
                   </div>
                 )}

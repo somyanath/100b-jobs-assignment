@@ -4,7 +4,6 @@ import { TEAM_SIZE_CONSTRAINTS } from "@/constants";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
-import { useAppContext } from "@/hooks/useAppContext";
 
 interface I_TeamSizeModalProps {
   isOpen: boolean;
@@ -17,17 +16,20 @@ interface I_TeamSizeModalProps {
  * Team size modal component
  * Allows users to change the team size during team building
  */
-const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSizeModalProps) => {
-  const { teamSize, setTeamSize } = useAppContext();
-  const [error, setError] = useState<string>('');
+const TeamSizeModal = ({
+  isOpen,
+  onClose,
+  onConfirm,
+  currentTeamSize
+}: I_TeamSizeModalProps) => {
+  const [teamSize, setTeamSize] = useState<string>('');
 
   // Initialize team size when modal opens
   useEffect(() => {
     if (isOpen) {
-      setTeamSize(currentTeamSize);
-      setError('');
+      setTeamSize(currentTeamSize.toString());
     }
-  }, [isOpen, currentTeamSize, setTeamSize]);
+  }, [isOpen, currentTeamSize]);
 
   // Validate team size input
   const validateTeamSize = (size: number): boolean => {
@@ -38,47 +40,38 @@ const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSi
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    const size = teamSize;
+    const size = parseInt(teamSize);
     
     if (isNaN(size)) {
-      setError('Please enter a valid number');
       return;
     }
 
     if (!validateTeamSize(size)) {
-      setError(`Team size must be between ${TEAM_SIZE_CONSTRAINTS.MIN} and ${TEAM_SIZE_CONSTRAINTS.MAX}`);
       return;
     }
 
-    setError('');
     onConfirm(size);
     onClose();
   };
 
   // Handle cancel action
   const handleCancel = () => {
-    setTeamSize(currentTeamSize);
-    setError('');
+    setTeamSize(currentTeamSize.toString());
     onClose();
   };
 
   // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
-    setTeamSize(parseInt(value));
-    
-    // Clear error when user starts typing
-    if (error) {
-      setError('');
-    }
+    setTeamSize(value);
   };
 
   // Check if current input is valid
   const isValidInput = () => {
-    const size = teamSize;
+    const size = parseInt(teamSize);
     return !isNaN(size) && validateTeamSize(size);
   };
-  
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="sm:max-w-[425px]">
@@ -102,18 +95,12 @@ const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSi
                 max={TEAM_SIZE_CONSTRAINTS.MAX}
                 value={teamSize}
                 onChange={handleInputChange}
-                className={`col-span-3 ${error ? 'border-red-500 focus:border-red-500' : ''}`}
                 placeholder={`Enter team size (${TEAM_SIZE_CONSTRAINTS.MIN}-${TEAM_SIZE_CONSTRAINTS.MAX})`}
+                className="col-span-3"
                 autoFocus
-                aria-describedby={error ? "team-size-error" : "team-size-help"}
+                required
               />
             </div>
-            
-            {error && (
-              <div id="team-size-error" className="text-sm text-red-500 text-center">
-                {error}
-              </div>
-            )}
             
             <div id="team-size-help" className="text-sm text-gray-500 text-center">
               Current team size: {currentTeamSize} member{currentTeamSize !== 1 ? 's' : ''}
@@ -121,7 +108,7 @@ const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSi
           </div>
           
           <DialogFooter>
-            <Button
+            <Button 
               type="button" 
               variant="outline" 
               onClick={handleCancel}
@@ -130,7 +117,7 @@ const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSi
             </Button>
             <Button 
               type="submit" 
-              disabled={!isValidInput()}
+              variant={isValidInput() ? 'default' : 'outline'}
             >
               Update Team Size
             </Button>
@@ -139,6 +126,6 @@ const TeamSizeModal = ({ isOpen, onClose, onConfirm, currentTeamSize }: I_TeamSi
       </DialogContent>
     </Dialog>
   );
-}
+};
 
-export default TeamSizeModal
+export default TeamSizeModal;

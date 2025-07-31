@@ -18,6 +18,7 @@ interface AppContextType {
   setTeamSize: (size: number) => void;
   addToShortlist: (candidate: I_CandidateWithScore) => void;
   clearShortlist: () => void;
+  setShortlistedTeam: (team: I_CandidateWithScore[]) => void;
 
   // Storage availability
   storageAvailable: boolean;
@@ -145,6 +146,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     teamSize,
     setTeamSize,
     addToShortlist,
+    setShortlistedTeam,
     clearShortlist,
     storageAvailable,
   };

@@ -1,8 +1,10 @@
+import CandidateModal from "@/components/shortlist/CandidateModal";
 import TeamBuilder from "@/components/shortlist/TeamBuilder";
 import TeamReview from "@/components/shortlist/TeamReview";
 import TeamSizeSetup from "@/components/shortlist/TeamSizeSetup";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/hooks/useAppContext";
+import type { I_CandidateWithScore } from "@/types/Candidate";
 import { useEffect, useState } from "react";
 
 // Step enumeration for better type safety
@@ -24,9 +26,11 @@ const ShortlistPage = () => {
     loading,
     clearShortlist,
     storageAvailable,
+    addToShortlist,
   } = useAppContext();
   
   const [step, setStep] = useState<E_WorkflowStep | -1>(-1); // -1 indicates initialization
+  const [selectedCandidateForModal, setSelectedCandidateForModal] = useState<I_CandidateWithScore | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Initialize workflow step based on existing data
@@ -55,6 +59,35 @@ const ShortlistPage = () => {
   const handleStartBuilding = () => {
     clearShortlist();
     setStep(E_WorkflowStep.TEAM_SETUP);
+  };
+
+  const handleTeamSizeSubmit = () => {
+    setStep(E_WorkflowStep.BUILDING);
+  };
+  
+  const handleBackFromTeamSize = () => {
+    setStep(E_WorkflowStep.EMPTY);
+  };
+  
+  const handleBackToBuilding = () => {
+    setStep(E_WorkflowStep.BUILDING);
+  };
+
+  const handleReviewTeam = () => {
+    setStep(E_WorkflowStep.REVIEW);
+  };
+
+  // Modal handlers
+  const handleCandidateViewDetails = (candidate: I_CandidateWithScore) => {
+    setSelectedCandidateForModal(candidate);
+  };
+  
+  const handleCloseModal = () => {
+    setSelectedCandidateForModal(null);
+  };
+
+  const handleCandidateSelectFromModal = (candidate: I_CandidateWithScore) => {
+    addToShortlist(candidate);
   };
 
   // Render empty state (step 0)
@@ -92,17 +125,17 @@ const ShortlistPage = () => {
         
       case E_WorkflowStep.TEAM_SETUP:
         return (
-          <TeamSizeSetup />
+          <TeamSizeSetup onSubmit={handleTeamSizeSubmit} onBack={handleBackFromTeamSize} />
         );
         
       case E_WorkflowStep.BUILDING:
         return (
-          <TeamBuilder />
+          <TeamBuilder onCandidateViewDetails={handleCandidateViewDetails} onReviewTeam={handleReviewTeam} />
         );
         
       case E_WorkflowStep.REVIEW:
         return (
-          <TeamReview />
+          <TeamReview onBackToBuilding={handleBackToBuilding} onStartOver={handleStartBuilding} />
         );
         
       default:
@@ -121,7 +154,17 @@ const ShortlistPage = () => {
       ) : (
         renderStepContent()
       )}
-      
+
+      {/* Candidate Detail Modal */}
+      {selectedCandidateForModal && (
+        <CandidateModal
+          candidate={selectedCandidateForModal}
+          isOpen={true}
+          onClose={handleCloseModal}
+          onSelect={handleCandidateSelectFromModal}
+          showSelectButton={step === E_WorkflowStep.BUILDING && shortlistedTeam.length < teamSize}
+        />
+      )}
     </div>
   )
 }

@@ -13,6 +13,10 @@ interface I_CandidateSelectionAreaProps {
   activeRoleIndex?: number;
 }
 
+/**
+ * Candidate selection area component
+ * Handles filtering, scoring, and displaying candidates for a given role
+ */
 const CandidateSelectionArea = ({ 
   roleFilters,
   onCandidateSelect,
