@@ -34,7 +34,7 @@ export function useProgressiveLoading<T>(fullData: T[], batchSize: number = 20) 
     return () => clearTimeout(timer);
   }, [currentIndex, batchSize, fullData.length]);
 
-  const isComplete = fullData.length > 0 && currentIndex >= fullData.length;
+  const isComplete = fullData.length === 0 || currentIndex >= fullData.length;
 
   return {
     loadedData,

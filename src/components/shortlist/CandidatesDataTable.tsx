@@ -239,7 +239,7 @@ const CandidatesDataTable = ({
             ) : (
               <TableRow>
                 <TableCell colSpan={columns.length} className="h-24 text-center">
-                  No candidates found matching your criteria.
+                  No candidates found matching your criteria. Change your filters and try again.
                 </TableCell>
               </TableRow>
             )}
