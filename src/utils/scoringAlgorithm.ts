@@ -98,24 +98,5 @@ export const calculateCandidateScores = (
     };
   });
 
-  // Sorting logic remains the same
-  const sortedScored = scored.sort((a, b) => {
-    if (Math.abs(a.score! - b.score!) < 0.1) { // Tie situation
-      const aHasTop25 = a.education.degrees.some(degree => degree.isTop25);
-      const bHasTop25 = b.education.degrees.some(degree => degree.isTop25);
-      const aHasTop50 = a.education.degrees.some(degree => degree.isTop50);
-      const bHasTop50 = b.education.degrees.some(degree => degree.isTop50);
-      
-      if (aHasTop25 && !bHasTop25) return -1;
-      if (!aHasTop25 && bHasTop25) return 1;
-      
-      if (!aHasTop25 && !bHasTop25) {
-        if (aHasTop50 && !bHasTop50) return -1;
-        if (!aHasTop50 && bHasTop50) return 1;
-      }
-    }
-    return b.score! - a.score!; // Higher score first
-  });
-
-  return sortedScored;
+  return scored;
 };

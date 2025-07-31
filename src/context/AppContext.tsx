@@ -114,7 +114,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const trimmedTeam = shortlistedTeam.slice(0, size);
       setShortlistedTeam(trimmedTeam);
     }
-  }, [teamSize, shortlistedTeam]);
+  }, [shortlistedTeam]);
 
   const addToShortlist = useCallback((candidate: I_CandidateWithScore) => {
     setShortlistedTeam(prev => {
@@ -126,7 +126,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       const newTeam = [...prev, candidate];
       return newTeam;
     });
-  }, [shortlistedTeam.length]);
+  }, []);
 
   const replaceInShortlist = useCallback((candidate: I_CandidateWithScore, roleIndex: number) => {
     setShortlistedTeam(prev => {
@@ -141,7 +141,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
       
       return newTeam;
     });
-  }, [shortlistedTeam.length]);
+  }, []);
 
   const clearShortlist = useCallback(() => {
     setShortlistedTeam([]);

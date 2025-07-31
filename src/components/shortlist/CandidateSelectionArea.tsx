@@ -27,16 +27,7 @@ const CandidateSelectionArea = ({
   activeRoleIndex = -1
 }: I_CandidateSelectionAreaProps) => {
   const { candidates } = useAppContext();
-  const { getCachedScores } = useCandidateScoreCache();
-
-  // Memoize filter criteria for stable dependencies
-  const filterCriteria = useMemo(() => ({
-    skills: roleFilters.skills,
-    experience: roleFilters.experience,
-    education: roleFilters.education,
-    selectedIds: selectedCandidates.filter(c => c !== null).map(c => c.id).join(','),
-    activeRoleIndex
-  }), [roleFilters, selectedCandidates, activeRoleIndex]);
+  const { getScoredCandidates } = useCandidateScoreCache();
 
   // Filter candidates based on role filters
   const filteredCandidates = useMemo(() => {
@@ -50,31 +41,31 @@ const CandidateSelectionArea = ({
       }
 
       // Skills filtering
-      if (filterCriteria.skills.length > 0) {
+      if (roleFilters.skills.length > 0) {
         const candidateSkills = candidate.skills?.map(skill => skill.toLowerCase()) || [];
-        const hasMatchingSkill = filterCriteria.skills.some(filterSkill => 
+        const hasMatchingSkill = roleFilters.skills.some(filterSkill => 
           candidateSkills.some(skill => skill.includes(filterSkill.toLowerCase()))
         );
         if (!hasMatchingSkill) return false;
       }
 
       // Experience filtering
-      if (filterCriteria.experience.length > 0) {
+      if (roleFilters.experience.length > 0) {
         const candidateExperience = candidate.work_experiences?.map(exp => 
           `${exp.roleName} ${exp.company}`.toLowerCase()
         ).join(' ') || '';
-        const hasMatchingExperience = filterCriteria.experience.some(filterExp => 
+        const hasMatchingExperience = roleFilters.experience.some(filterExp => 
           candidateExperience.includes(filterExp.toLowerCase())
         );
         if (!hasMatchingExperience) return false;
       }
 
       // Education filtering
-      if (filterCriteria.education.length > 0) {
+      if (roleFilters.education.length > 0) {
         const candidateEducation = candidate.education?.degrees?.map(degree => 
           `${degree.degree} ${degree.subject}`.toLowerCase()
         ).join(' ') || '';
-        const hasMatchingEducation = filterCriteria.education.some(filterEdu => 
+        const hasMatchingEducation = roleFilters.education.some(filterEdu => 
           candidateEducation.includes(filterEdu.toLowerCase())
         );
         if (!hasMatchingEducation) return false;
@@ -82,11 +73,12 @@ const CandidateSelectionArea = ({
 
       return true;
     });
-  }, [activeRoleIndex, filterCriteria.education, filterCriteria.experience, filterCriteria.skills, selectedCandidates]);
+  }, [candidates, roleFilters, selectedCandidates, activeRoleIndex]);
 
   const filteredCandidatesWithScores = useMemo(() => {
-    return getCachedScores(filteredCandidates, filterCriteria);
-  }, [filteredCandidates, filterCriteria, getCachedScores]);
+    const scoredCandidates = getScoredCandidates(filteredCandidates, roleFilters);
+    return scoredCandidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
+  }, [filteredCandidates, roleFilters, getScoredCandidates]);
 
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     onCandidateSelect(candidate);
@@ -97,7 +89,7 @@ const CandidateSelectionArea = ({
   }, [onCandidateViewDetails]);
 
   // Computed values
-  const activeFiltersCount = filterCriteria.skills.length + filterCriteria.experience.length + filterCriteria.education.length;
+  const activeFiltersCount = roleFilters.skills.length + roleFilters.experience.length + roleFilters.education.length;
   const hasActiveFilters = activeFiltersCount > 0;
 
   // Filter summary text
@@ -107,12 +99,12 @@ const CandidateSelectionArea = ({
     }
     
     const filterParts = [];
-    if (filterCriteria.skills.length > 0) filterParts.push(`${filterCriteria.skills.length} skills`);
-    if (filterCriteria.experience.length > 0) filterParts.push(`${filterCriteria.experience.length} experience`);
-    if (filterCriteria.education.length > 0) filterParts.push(`${filterCriteria.education.length} education`);
+    if (roleFilters.skills.length > 0) filterParts.push(`${roleFilters.skills.length} skills`);
+    if (roleFilters.experience.length > 0) filterParts.push(`${roleFilters.experience.length} experience`);
+    if (roleFilters.education.length > 0) filterParts.push(`${roleFilters.education.length} education`);
     
     return `Showing ${filteredCandidatesWithScores.length} candidates matching ${activeFiltersCount} filter criteria`;
-  }, [hasActiveFilters, activeFiltersCount, filterCriteria, filteredCandidatesWithScores.length]);
+  }, [hasActiveFilters, activeFiltersCount, roleFilters, filteredCandidatesWithScores.length]);
   
   return (
     <div className="space-y-4">
@@ -131,11 +123,11 @@ const CandidateSelectionArea = ({
           <div className="text-right">
             <div className="text-xs text-gray-500">Active filters:</div>
             <div className="text-xs text-blue-600">
-              {filterCriteria.skills.length > 0 && `${filterCriteria.skills.length} skills`}
-              {filterCriteria.skills.length > 0 && (filterCriteria.experience.length > 0 || filterCriteria.education.length > 0) && ', '}
-              {filterCriteria.experience.length > 0 && `${filterCriteria.experience.length} experience`}
-              {filterCriteria.experience.length > 0 && filterCriteria.education.length > 0 && ', '}
-              {filterCriteria.education.length > 0 && `${filterCriteria.education.length} education`}
+              {roleFilters.skills.length > 0 && `${roleFilters.skills.length} skills`}
+              {roleFilters.skills.length > 0 && (roleFilters.experience.length > 0 || roleFilters.education.length > 0) && ', '}
+              {roleFilters.experience.length > 0 && `${roleFilters.experience.length} experience`}
+              {roleFilters.experience.length > 0 && roleFilters.education.length > 0 && ', '}
+              {roleFilters.education.length > 0 && `${roleFilters.education.length} education`}
             </div>
           </div>
         )}

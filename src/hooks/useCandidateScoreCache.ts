@@ -1,121 +1,94 @@
 import { useRef, useCallback, useEffect } from 'react';
 import type { I_CandidateWithScore } from '../types/Candidate';
-import { calculateCandidateScores } from '../utils/scoringAlgorithm';
+import { calculateCandidateScores } from '../utils/scoringAlgorithm'; // Assumes the non-sorting version
 
 interface CacheEntry {
-  score: I_CandidateWithScore;
+  scoredCandidate: I_CandidateWithScore;
   timestamp: number;
-  accessCount: number;
 }
 
+const CACHE_EXPIRATION_MS = 5 * 60 * 1000; // 5 minutes
+
+/**
+ * A time-based cache for candidate scores.
+ */
 export function useCandidateScoreCache() {
   const cache = useRef(new Map<string, CacheEntry>());
-  const stats = useRef({ totalRequests: 0, cacheHits: 0 });
 
-  // Generate stable cache key from candidate and filters
-  const generateCacheKey = useCallback((candidateId: string, filters: {
-    skills: string[];
-    experience: string[];
-    education: string[];
-  }): string => {
-    const filterKey = [
-      filters.skills.sort().join('|'),
-      filters.experience.sort().join('|'),
-      filters.education.sort().join('|')
-    ].join('::');
-    
+  /**
+   * Generates a cache key. 
+   * NOTE: Filters are essential in the key. A candidate's score is only valid
+   * for the specific filters used to generate it.
+   */
+  const generateCacheKey = useCallback((
+    candidateId: string, 
+    filters: { skills: string[]; experience: string[]; education: string[] }
+  ): string => {
+    const filterKey = JSON.stringify(filters);
     return `${candidateId}::${filterKey}`;
   }, []);
 
-  // Batch score multiple candidates efficiently
-  const getCachedScores = useCallback((
+  /**
+   * Scores a list of candidates, using the cache where possible.
+   */
+  const getScoredCandidates = useCallback((
     candidates: I_CandidateWithScore[], 
     filters: { skills: string[]; experience: string[]; education: string[] }
   ): I_CandidateWithScore[] => {
+    
+    const now = Date.now();
     const results: I_CandidateWithScore[] = [];
-    const uncachedCandidates: I_CandidateWithScore[] = [];
-    const uncachedIndices: number[] = [];
+    const candidatesToScore: I_CandidateWithScore[] = [];
+    const indicesToFill: number[] = [];
 
-    // First pass: collect cached results and identify uncached candidates
+    // 1. Check cache for each candidate
     candidates.forEach((candidate, index) => {
-      const cacheKey = generateCacheKey(candidate.id, filters);
-      stats.current.totalRequests++;
-      
-      const cached = cache.current.get(cacheKey);
-      if (cached) {
-        cached.accessCount++;
-        cached.timestamp = Date.now();
-        stats.current.cacheHits++;
-        results[index] = cached.score;
+      const key = generateCacheKey(candidate.id, filters);
+      const entry = cache.current.get(key);
+
+      if (entry && (now - entry.timestamp < CACHE_EXPIRATION_MS)) {
+        results[index] = entry.scoredCandidate; // Use cached score
       } else {
-        uncachedCandidates.push(candidate);
-        uncachedIndices.push(index);
+        candidatesToScore.push(candidate); // Add to list to be scored
+        indicesToFill.push(index);         // Remember its original position
       }
     });
 
-    // Batch calculate uncached candidates
-    if (uncachedCandidates.length > 0) {
-      const batchScored = calculateCandidateScores(
-        uncachedCandidates,
-        filters.skills,
-        filters.experience,
+    // 2. Score any candidates that were not in the cache
+    if (candidatesToScore.length > 0) {
+      const newlyScored = calculateCandidateScores(
+        candidatesToScore, 
+        filters.skills, 
+        filters.experience, 
         filters.education
       );
 
-      // Store batch results in cache and fill results array
-      batchScored.forEach((scoredCandidate, batchIndex) => {
-        const originalIndex = uncachedIndices[batchIndex];
-        const cacheKey = generateCacheKey(uncachedCandidates[batchIndex].id, filters);
-        
-        cache.current.set(cacheKey, {
-          score: scoredCandidate,
-          timestamp: Date.now(),
-          accessCount: 1
-        });
+      // 3. Add new scores to cache and results array
+      newlyScored.forEach((scoredCand, i) => {
+        const originalIndex = indicesToFill[i];
+        results[originalIndex] = scoredCand; // Place in correct original position
 
-        results[originalIndex] = scoredCandidate;
+        const key = generateCacheKey(scoredCand.id, filters);
+        cache.current.set(key, { scoredCandidate: scoredCand, timestamp: now });
       });
     }
 
     return results;
   }, [generateCacheKey]);
 
-  // Clean up old cache entries (LRU-based)
-  const cleanupCache = useCallback((maxSize: number = 1000, maxAge: number = 300000) => {
-    if (cache.current.size <= maxSize) return;
+  // 4. Periodic cleanup to prevent memory leaks over a long session
+  useEffect(() => {
+    const cleanupInterval = setInterval(() => {
+      const now = Date.now();
+      cache.current.forEach((entry, key) => {
+        if (now - entry.timestamp >= CACHE_EXPIRATION_MS) {
+          cache.current.delete(key);
+        }
+      });
+    }, 60 * 1000); // Run cleanup every minute
 
-    const now = Date.now();
-    const entries = Array.from(cache.current.entries());
-    
-    // Remove expired entries first
-    const validEntries = entries.filter(([key, entry]) => {
-      if (now - entry.timestamp > maxAge) {
-        cache.current.delete(key);
-        return false;
-      }
-      return true;
-    });
-
-    // If still too large, remove least recently used entries
-    if (validEntries.length > maxSize) {
-      validEntries
-        .sort((a, b) => a[1].timestamp - b[1].timestamp) // Sort by timestamp (oldest first)
-        .slice(0, validEntries.length - maxSize)
-        .forEach(([key]) => cache.current.delete(key));
-    }
+    return () => clearInterval(cleanupInterval);
   }, []);
 
-  // Periodic cleanup
-  useEffect(() => {
-    const cleanup = setInterval(() => {
-      cleanupCache(1000, 300000); // Keep max 1000 entries, max age 5 minutes
-    }, 60000); // Run every minute
-    
-    return () => clearInterval(cleanup);
-  }, [cleanupCache]);
-
-  return {
-    getCachedScores,
-    cleanupCache
-  };
+  return { getScoredCandidates };
 }
