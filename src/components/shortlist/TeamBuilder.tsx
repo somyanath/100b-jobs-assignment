@@ -5,8 +5,9 @@ import RoleSlotPanel from "./RoleSlotPanel";
 import CandidateFilters, { type I_RoleFilters } from "./CandidateFilters";
 import CandidateSelectionArea from "./CandidateSelectionArea";
 import type { I_CandidateWithScore } from "@/types/Candidate";
+import TeamSizeModal from "./TeamSizeModal";
 
-interface TeamBuilderProps {
+interface I_TeamBuilderProps {
   onCandidateViewDetails: (candidate: I_CandidateWithScore) => void;
 }
 
@@ -14,15 +15,17 @@ interface TeamBuilderProps {
  * Main team building component
  * Manages role selection, candidate filtering, and team assembly
  */
-const TeamBuilder = ({ onCandidateViewDetails }: TeamBuilderProps) => {
+const TeamBuilder = ({ onCandidateViewDetails }: I_TeamBuilderProps) => {
   const { 
     shortlistedTeam,
     teamSize,
-    addToShortlist
+    addToShortlist,
+    setTeamSize
   } = useAppContext();
   
   // State management
   const [activeRoleIndex, setActiveRoleIndex] = useState<number>(-1);
+  const [showChangeTeamSizeModal, setShowChangeTeamSizeModal] = useState<boolean>(false);
   const [roleFilters, setRoleFilters] = useState<I_RoleFilters>({
     skills: [],
     education: [],
@@ -60,6 +63,15 @@ const TeamBuilder = ({ onCandidateViewDetails }: TeamBuilderProps) => {
     setRoleFilters(filters);
   }, []);
 
+  const handleChangeTeamSize = () => {
+    setShowChangeTeamSizeModal(true);
+  };
+
+  const handleTeamSizeConfirm = (newSize: number) => {
+    setTeamSize(newSize);
+    setShowChangeTeamSizeModal(false);
+  };
+
   const isTeamComplete = shortlistedTeam.length === teamSize;
   const hasActiveRole = activeRoleIndex >= 0;
   const showFilters = hasActiveRole;
@@ -78,7 +90,7 @@ const TeamBuilder = ({ onCandidateViewDetails }: TeamBuilderProps) => {
                     Team Builder
                   </h2>
                   <button
-                    onClick={() => {}}
+                    onClick={handleChangeTeamSize}
                     className="text-sm text-blue-600 hover:text-blue-700 font-medium"
                   >
                     Change Size
@@ -189,7 +201,12 @@ const TeamBuilder = ({ onCandidateViewDetails }: TeamBuilderProps) => {
         </div>
 
         {/* Team Size Modal */}
-        {'Team size modal'}
+        <TeamSizeModal
+          isOpen={showChangeTeamSizeModal}
+          onClose={() => setShowChangeTeamSizeModal(false)}
+          onConfirm={handleTeamSizeConfirm}
+          currentTeamSize={teamSize}
+        />
       </div>
     </div>
   );

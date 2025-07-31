@@ -2,17 +2,12 @@ import { useAppContext } from "@/hooks/useAppContext";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { TEAM_SIZE_CONSTRAINTS } from "@/constants";
 
 interface I_TeamSizeSetupProps {
   onSubmit: () => void;
   onBack: () => void;
 }
-
-// Team size constraints
-const TEAM_SIZE_CONSTRAINTS = {
-  MIN: 1,
-  MAX: 15,
-} as const;
 
 /**
  * Team size setup component
