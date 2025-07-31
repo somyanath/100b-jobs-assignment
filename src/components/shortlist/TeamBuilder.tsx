@@ -1,7 +1,8 @@
 import { useAppContext } from "@/hooks/useAppContext";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import RoleSlotPanel from "./RoleSlotPanel";
+import CandidateFilters, { type I_RoleFilters } from "./CandidateFilters";
 
 /**
  * Main team building component
@@ -15,12 +16,22 @@ const TeamBuilder = () => {
   
   // State management
   const [activeRoleIndex, setActiveRoleIndex] = useState<number>(-1);
+  const [roleFilters, setRoleFilters] = useState<I_RoleFilters>({
+    skills: [],
+    education: [],
+    experience: []
+  });
 
   // Initialize active role index
   useEffect(() => {
     const firstEmptyRoleIndex = shortlistedTeam.length < teamSize ? shortlistedTeam.length : -1;
     setActiveRoleIndex(firstEmptyRoleIndex);
   }, [shortlistedTeam.length, teamSize]);
+
+  // Event handlers
+  const handleFilterChange = useCallback((filters: I_RoleFilters) => {
+    setRoleFilters(filters);
+  }, []);
 
   const isTeamComplete = shortlistedTeam.length === teamSize;
   const hasActiveRole = activeRoleIndex >= 0;
@@ -72,7 +83,10 @@ const TeamBuilder = () => {
                 </div>
 
                 <div className="p-4">
-                  {'Candidate filters'}
+                  <CandidateFilters 
+                    roleFilters={roleFilters}
+                    onFilterChange={handleFilterChange}
+                  />
                 </div>
               </div>
             )}
