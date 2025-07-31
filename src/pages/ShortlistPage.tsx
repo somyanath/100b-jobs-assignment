@@ -1,12 +1,14 @@
 import CandidateModal from "@/components/shortlist/CandidateModal";
 import ProgressIndicator from "@/components/shortlist/ProgressIndicator";
-import TeamBuilder from "@/components/shortlist/TeamBuilder";
-import TeamReview from "@/components/shortlist/TeamReview";
-import TeamSizeSetup from "@/components/shortlist/TeamSizeSetup";
 import { Button } from "@/components/ui/button";
 import { useAppContext } from "@/hooks/useAppContext";
 import type { I_CandidateWithScore } from "@/types/Candidate";
-import { useEffect, useState } from "react";
+import { lazy, useEffect, useState } from "react";
+
+const TeamSizeSetup = lazy(() => import('@/components/shortlist/TeamSizeSetup'));
+const TeamBuilder = lazy(() => import('@/components/shortlist/TeamBuilder'));
+const TeamReview = lazy(() => import('@/components/shortlist/TeamReview'));
+
 
 // Step enumeration for better type safety
 const E_WorkflowStep = {

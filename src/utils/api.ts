@@ -50,13 +50,8 @@ const transformCandidate = (candidate: I_Candidate, index: number): I_CandidateW
  */
 const fetchCandidates = async (): Promise<ApiResponse<I_CandidateWithScore[]>> => {
   try {
-    const response = await fetch('/resources/candidatesData.json');
-    
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    
-    const rawData: I_Candidate[] = await response.json();
+    const module = await import('../../resources/candidatesData.json');
+    const rawData: I_Candidate[] = module.default as I_Candidate[];
     
     // Validate that we received an array
     if (!Array.isArray(rawData)) {
