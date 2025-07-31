@@ -20,7 +20,6 @@ const CandidateModal = ({
   onSelect,
   showSelectButton = false
 }: I_CandidateModalProps) => {
-  // Utility functions
   const formatSalary = useCallback((salaryObj: Record<string, string>) => {
     if (!salaryObj || Object.keys(salaryObj).length === 0) return 'Not specified';
     
@@ -43,7 +42,6 @@ const CandidateModal = ({
     }
   }, []);
 
-  // Event handlers
   const handleSelectClick = useCallback((e: React.MouseEvent) => {
     e.stopPropagation();
     if (onSelect) {

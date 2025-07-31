@@ -1,6 +1,8 @@
 import { useAppContext } from "@/hooks/useAppContext";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { RotateCcw } from "lucide-react";
 
 interface I_RoleSlotPanelProps {
   activeRoleIndex: number;
@@ -54,7 +56,6 @@ const RoleSlotPanel = ({ activeRoleIndex, onRoleSelect }: I_RoleSlotPanelProps) 
     }
   };
 
-  // Event handlers
   const handleRoleClick = (index: number) => {
     onRoleSelect(index);
   };
@@ -101,6 +102,19 @@ const RoleSlotPanel = ({ activeRoleIndex, onRoleSelect }: I_RoleSlotPanelProps) 
                     </div>
                     <div className="text-xs text-gray-500 truncate">
                       {candidate.skills.slice(0, 2).join(', ')}
+                    </div>
+
+                    {/* Replace button for filled roles */}
+                    <div className="mt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleRoleClick(index)}
+                        className="w-full text-xs h-7 bg-white hover:bg-orange-50 border-orange-200 text-orange-700 hover:text-orange-800 cursor-pointer"
+                      >
+                        <RotateCcw className="h-3 w-3 mr-1" />
+                        Click to Replace
+                      </Button>
                     </div>
                   </div>
                 )}

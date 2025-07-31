@@ -31,8 +31,6 @@ const CandidateFilters = ({ roleFilters, onFilterChange, isVisible }: I_Candidat
 
   const totalFiltersCount = roleFilters.skills.length + roleFilters.experience.length + roleFilters.education.length;
 
-  if (!isVisible) return null;
-
   const filters = {
     skills: { label: 'Skills', keywords: roleFilters.skills, onKeywordsChange: (keywords: string[]) => handleFilterChange('skills', keywords), placeholder: 'e.g., React, Python, JavaScript', inputClassName: 'border-blue-200 focus:border-blue-500' },
     experience: { label: 'Experience', keywords: roleFilters.experience, onKeywordsChange: (keywords: string[]) => handleFilterChange('experience', keywords), placeholder: 'e.g., Senior, Lead, Manager', inputClassName: 'border-green-200 focus:border-green-500' },
@@ -45,7 +43,7 @@ const CandidateFilters = ({ roleFilters, onFilterChange, isVisible }: I_Candidat
     });
   };
 
-
+  if (!isVisible) return null;
 
   return (
     <div className="w-full">
@@ -71,7 +69,6 @@ const CandidateFilters = ({ roleFilters, onFilterChange, isVisible }: I_Candidat
 
       {/* Skills Filter */}
       {renderFilters(filters)}
-      
     </div>
   );
 }

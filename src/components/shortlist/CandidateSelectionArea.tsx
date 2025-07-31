@@ -2,7 +2,7 @@ import { useAppContext } from "@/hooks/useAppContext";
 import CandidatesDataTable from "./CandidatesDataTable";
 import type { I_RoleFilters } from "./CandidateFilters";
 import type { I_CandidateWithScore } from "@/types/Candidate";
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 
 interface I_CandidateSelectionAreaProps {
   roleFilters: I_RoleFilters;
@@ -32,7 +32,7 @@ const CandidateSelectionArea = ({
     skills: roleFilters.skills.join(','),
     experience: roleFilters.experience.join(','),
     education: roleFilters.education.join(','),
-    selectedIds: selectedCandidates.map(c => c.id).join(','),
+    selectedIds: selectedCandidates.filter(c => c !== null).map(c => c.id).join(','),
     activeRoleIndex
   }), [roleFilters, selectedCandidates, activeRoleIndex]);
 
@@ -40,8 +40,8 @@ const CandidateSelectionArea = ({
   const filteredCandidates = useMemo(() => {
     return candidates.filter(candidate => {
       // Filter out already selected candidates (unless they are the one being replaced)
-      const isSelected = selectedCandidates.some(selected => selected.id === candidate.id);
-      const isBeingReplaced = activeRoleIndex >= 0 && selectedCandidates[activeRoleIndex]?.id === candidate.id;
+      const isSelected = selectedCandidates.some(selected => selected !== null && selected.id === candidate.id);
+      const isBeingReplaced = activeRoleIndex >= 0 && selectedCandidates[activeRoleIndex] !== null && selectedCandidates[activeRoleIndex]?.id === candidate.id;
       
       if (isSelected && !isBeingReplaced) {
         return false;
@@ -81,6 +81,14 @@ const CandidateSelectionArea = ({
       return true;
     });
   }, [candidates, filterCriteria]);
+
+  const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
+    onCandidateSelect(candidate);
+  }, [onCandidateSelect]);
+
+  const handleViewDetails = useCallback((candidate: I_CandidateWithScore) => {
+    onCandidateViewDetails(candidate);
+  }, [onCandidateViewDetails]);
 
   // Computed values
   const activeFiltersCount = roleFilters.skills.length + roleFilters.experience.length + roleFilters.education.length;
@@ -130,8 +138,8 @@ const CandidateSelectionArea = ({
       {/* Candidates DataTable */}
       <CandidatesDataTable
         candidates={filteredCandidates}
-        onViewDetails={onCandidateViewDetails}
-        onSelectForTeam={onCandidateSelect}
+        onViewDetails={handleViewDetails}
+        onSelectForTeam={handleCandidateSelect}
         showSelectButtons={showSelectButtons}
       />
     </div>

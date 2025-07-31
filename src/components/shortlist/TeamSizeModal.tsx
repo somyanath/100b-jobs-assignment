@@ -42,11 +42,7 @@ const TeamSizeModal = ({
     
     const size = parseInt(teamSize);
     
-    if (isNaN(size)) {
-      return;
-    }
-
-    if (!validateTeamSize(size)) {
+    if (isNaN(size) || !validateTeamSize(size)) {
       return;
     }
 

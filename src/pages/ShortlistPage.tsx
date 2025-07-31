@@ -1,4 +1,5 @@
 import CandidateModal from "@/components/shortlist/CandidateModal";
+import ProgressIndicator from "@/components/shortlist/ProgressIndicator";
 import TeamBuilder from "@/components/shortlist/TeamBuilder";
 import TeamReview from "@/components/shortlist/TeamReview";
 import TeamSizeSetup from "@/components/shortlist/TeamSizeSetup";
@@ -29,18 +30,16 @@ const ShortlistPage = () => {
     addToShortlist,
   } = useAppContext();
   
-  const [step, setStep] = useState<E_WorkflowStep | -1>(-1); // -1 indicates initialization
+  const [step, setStep] = useState<E_WorkflowStep | -1>(-1);
   const [selectedCandidateForModal, setSelectedCandidateForModal] = useState<I_CandidateWithScore | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Initialize workflow step based on existing data
   useEffect(() => {
-    // Wait for data to be ready
     if (loading || storageAvailable === undefined) {
       return;
     }
     
-    // Determine initial step based on existing data
     let initialStep: E_WorkflowStep;
     
     if (shortlistedTeam.length > 0 && teamSize > 0) {
@@ -152,7 +151,13 @@ const ShortlistPage = () => {
       {isInitializing || step === -1 ? (
         renderLoadingState()
       ) : (
-        renderStepContent()
+        <>
+          {/* Progress Indicator - only show for active workflow steps */}
+          {step > E_WorkflowStep.EMPTY && (
+            <ProgressIndicator currentStep={step} totalSteps={3} />
+          )}
+          {renderStepContent()}
+        </>
       )}
 
       {/* Candidate Detail Modal */}

@@ -21,6 +21,7 @@ const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProp
     shortlistedTeam,
     teamSize,
     setShortlistedTeam,
+    replaceInShortlist,
     setTeamSize
   } = useAppContext();
   
@@ -53,24 +54,30 @@ const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProp
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     if (activeRoleIndex < 0) return;
   
-    // Check if candidate is already selected for another role (with null safety)
+    // Check if candidate is already selected for another role
     const isAlreadySelected = shortlistedTeam.some((teamMember, index) => 
       teamMember !== null && teamMember.id === candidate.id && index !== activeRoleIndex
     );
     
     if (isAlreadySelected) return;
+
+    const isReplacing = activeRoleIndex < shortlistedTeam.length && shortlistedTeam[activeRoleIndex] !== null;
     
-    const newTeam = [...shortlistedTeam];
-    while (newTeam.length <= activeRoleIndex) {
-      newTeam.push(null as unknown as I_CandidateWithScore);
+    if (isReplacing) {
+      replaceInShortlist(candidate, activeRoleIndex);
+    } else {
+      const newTeam = [...shortlistedTeam];
+      while (newTeam.length <= activeRoleIndex) {
+        newTeam.push(null as unknown as I_CandidateWithScore);
+      }
+      newTeam[activeRoleIndex] = candidate;
+      setShortlistedTeam(newTeam);
     }
-    newTeam[activeRoleIndex] = candidate;
-    setShortlistedTeam(newTeam);
     
-    // Reset manual selection flag and trigger auto-progression
+    // trigger auto-progression to next role
     setShouldAutoProgress(true);
     setLastSelectedCandidate(candidate);
-  }, [activeRoleIndex, shortlistedTeam, setShortlistedTeam]);
+  }, [activeRoleIndex, shortlistedTeam, replaceInShortlist, setShortlistedTeam]);
 
   // Auto-progress effect
   useEffect(() => {
@@ -104,12 +111,13 @@ const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProp
     setShowChangeTeamSizeModal(false);
   };
 
-  const validSelectedCandidates = shortlistedTeam.filter(candidate => candidate !== null);
+  const validSelectedCandidates = shortlistedTeam.filter(candidate => candidate !== null && candidate !== undefined).slice(0, teamSize);
   const filledRolesCount = validSelectedCandidates.length;
   const isTeamComplete = filledRolesCount === teamSize;
   const hasActiveRole = activeRoleIndex >= 0;
+  const isReplacingRole = hasActiveRole && activeRoleIndex < shortlistedTeam.length && shortlistedTeam[activeRoleIndex] !== null;
   const showFilters = hasActiveRole;
-  const showSelectButtons = !isTeamComplete;
+  const showSelectButtons = !isTeamComplete || isReplacingRole;
 
   return (
     <div className="w-full min-h-screen max-w-full overflow-x-hidden">
@@ -211,7 +219,10 @@ const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProp
                     </h2>
                     <p className="text-sm text-gray-600">
                       {activeRoleIndex >= 0 
-                        ? `Selecting candidate for Role ${activeRoleIndex + 1}`
+                        ? (activeRoleIndex < validSelectedCandidates.length 
+                            ? `Replacing candidate for Role ${activeRoleIndex + 1}` 
+                            : `Selecting candidate for Role ${activeRoleIndex + 1}`
+                          )
                         : 'All roles have been filled. You can review your team or make changes.'
                       }
                     </p>
@@ -228,7 +239,7 @@ const TeamBuilder = ({ onCandidateViewDetails, onReviewTeam }: I_TeamBuilderProp
                   onCandidateSelect={handleCandidateSelect}
                   onCandidateViewDetails={onCandidateViewDetails}
                   showSelectButtons={showSelectButtons}
-                  selectedCandidates={validSelectedCandidates}
+                  selectedCandidates={shortlistedTeam}
                   activeRoleIndex={activeRoleIndex}
                 />
               </div>

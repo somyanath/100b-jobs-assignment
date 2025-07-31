@@ -24,7 +24,6 @@ const TeamSizeSetup = ({ onSubmit, onBack }: I_TeamSizeSetupProps) => {
     }
   }, [teamSize]);
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -33,12 +32,11 @@ const TeamSizeSetup = ({ onSubmit, onBack }: I_TeamSizeSetupProps) => {
     if (isNaN(size) || size < TEAM_SIZE_CONSTRAINTS.MIN || size > TEAM_SIZE_CONSTRAINTS.MAX) {
       return;
     }
-    // If we get here, validation passed
+
     setTeamSize(size);
     onSubmit();
   };
 
-  // Handle input changes
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setInputValue(value);

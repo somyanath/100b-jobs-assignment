@@ -17,6 +17,7 @@ interface AppContextType {
   // Actions
   setTeamSize: (size: number) => void;
   addToShortlist: (candidate: I_CandidateWithScore) => void;
+  replaceInShortlist: (candidate: I_CandidateWithScore, roleIndex: number) => void;
   clearShortlist: () => void;
   setShortlistedTeam: (team: I_CandidateWithScore[]) => void;
 
@@ -127,6 +128,21 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     });
   }, [shortlistedTeam.length]);
 
+  const replaceInShortlist = useCallback((candidate: I_CandidateWithScore, roleIndex: number) => {
+    setShortlistedTeam(prev => {
+      // Validation: Check if roleIndex is valid
+      if (roleIndex < 0 || roleIndex >= prev.length) {
+        return prev;
+      }
+      
+      // Create new array with replacement at specific index
+      const newTeam = [...prev];
+      newTeam[roleIndex] = candidate;
+      
+      return newTeam;
+    });
+  }, [shortlistedTeam.length]);
+
   const clearShortlist = useCallback(() => {
     setShortlistedTeam([]);
     setTeamSizeState(0);
@@ -146,6 +162,7 @@ export const AppProvider: React.FC<AppProviderProps> = ({ children }) => {
     teamSize,
     setTeamSize,
     addToShortlist,
+    replaceInShortlist,
     setShortlistedTeam,
     clearShortlist,
     storageAvailable,
