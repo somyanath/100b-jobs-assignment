@@ -4,6 +4,7 @@ import type { I_RoleFilters } from "./CandidateFilters";
 import type { I_CandidateWithScore } from "@/types/Candidate";
 import { useCallback, useMemo } from "react";
 import { useCandidateScoreCache } from "@/hooks/useCandidateScoreCache";
+import { useProgressiveLoader } from "@/hooks/useProgressiveLoading";
 
 interface I_CandidateSelectionAreaProps {
   roleFilters: I_RoleFilters;
@@ -80,6 +81,8 @@ const CandidateSelectionArea = ({
     return scoredCandidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }, [filteredCandidates, roleFilters, getScoredCandidates]);
 
+  const { loadedData: displayCandidates, isLoading: isProgressiveLoading } = useProgressiveLoader(filteredCandidatesWithScores, 25);
+
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     onCandidateSelect(candidate);
   }, [onCandidateSelect]);
@@ -95,7 +98,7 @@ const CandidateSelectionArea = ({
   // Filter summary text
   const filterSummaryText = useMemo(() => {
     if (!hasActiveFilters) {
-      return `Showing all ${filteredCandidatesWithScores.length} candidates (no filters applied)`;
+      return `${filteredCandidatesWithScores.length} candidates (please apply filters to get weighted scores based results and filter out candidates)`;
     }
     
     const filterParts = [];
@@ -103,20 +106,35 @@ const CandidateSelectionArea = ({
     if (roleFilters.experience.length > 0) filterParts.push(`${roleFilters.experience.length} experience`);
     if (roleFilters.education.length > 0) filterParts.push(`${roleFilters.education.length} education`);
     
-    return `Showing ${filteredCandidatesWithScores.length} candidates matching ${activeFiltersCount} filter criteria`;
+    return `${filteredCandidatesWithScores.length} candidates matching ${activeFiltersCount} filter criteria`;
   }, [hasActiveFilters, activeFiltersCount, roleFilters, filteredCandidatesWithScores.length]);
   
   return (
     <div className="space-y-4">
       {/* Header with filter info */}
       <div className="flex justify-between items-center">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900">
-            Ranked Candidates
-          </h3>
-          <p className="text-sm text-gray-600">
-            {filterSummaryText}
-          </p>
+      <div className="flex flex-col gap-2">
+          <div className="flex flex-row gap-2 items-center">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Ranked Candidates
+            </h3>
+            {/* Circular Progress Loader - Only show when loading */}
+            {isProgressiveLoading && (
+              <div className="flex items-center space-x-2">
+                <div className="relative">
+                  <div className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                </div>
+                <span className="text-xs text-gray-400">
+                  Loading candidates...
+                </span>
+              </div>
+            )}
+          </div>
+          <div>
+            <p className={`text-sm font-semibold ${hasActiveFilters ? 'text-blue-600' : 'text-red-500'}`}>
+              {filterSummaryText}
+            </p>
+          </div>
         </div>
         
         {hasActiveFilters && (
@@ -135,7 +153,7 @@ const CandidateSelectionArea = ({
 
       {/* Candidates DataTable */}
       <CandidatesDataTable
-        candidates={filteredCandidatesWithScores}
+        candidates={displayCandidates}
         onViewDetails={handleViewDetails}
         onSelectForTeam={handleCandidateSelect}
         showSelectButtons={showSelectButtons}
