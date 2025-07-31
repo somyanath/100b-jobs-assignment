@@ -4,7 +4,7 @@ import type { I_RoleFilters } from "./CandidateFilters";
 import type { I_CandidateWithScore } from "@/types/Candidate";
 import { useCallback, useMemo } from "react";
 import { useCandidateScoreCache } from "@/hooks/useCandidateScoreCache";
-import { useProgressiveLoader } from "@/hooks/useProgressiveLoading";
+import { useProgressiveLoading } from "@/hooks/useProgressiveLoading";
 
 interface I_CandidateSelectionAreaProps {
   roleFilters: I_RoleFilters;
@@ -81,7 +81,7 @@ const CandidateSelectionArea = ({
     return scoredCandidates.sort((a, b) => (b.score ?? 0) - (a.score ?? 0));
   }, [filteredCandidates, roleFilters, getScoredCandidates]);
 
-  const { loadedData: displayCandidates, isLoading: isProgressiveLoading } = useProgressiveLoader(filteredCandidatesWithScores, 25);
+  const { loadedData: displayCandidates, isLoading: isProgressiveLoading } = useProgressiveLoading(filteredCandidatesWithScores, 25);
 
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     onCandidateSelect(candidate);

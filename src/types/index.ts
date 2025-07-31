@@ -7,11 +7,8 @@ export type {
   I_WorkExperience,
   I_Degree,
   I_Education,
-  I_SalaryExpectation,
   
   // Application state interfaces
-  I_FilterState,
-  I_SortState,
   I_PaginationState,
   
   // Team building interfaces

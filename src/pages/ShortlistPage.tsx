@@ -9,12 +9,15 @@ import type { I_CandidateWithScore } from "@/types/Candidate";
 import { useEffect, useState } from "react";
 
 // Step enumeration for better type safety
-enum E_WorkflowStep {
-  EMPTY = 0,
-  TEAM_SETUP = 1,
-  BUILDING = 2,
-  REVIEW = 3,
-}
+const E_WorkflowStep = {
+  EMPTY: 0,
+  TEAM_SETUP: 1,
+  BUILDING: 2,
+  REVIEW: 3,
+} as const;
+
+type T_WorkflowStep = typeof E_WorkflowStep[keyof typeof E_WorkflowStep];
+
 
 /**
  * Main team building workflow page
@@ -30,7 +33,7 @@ const ShortlistPage = () => {
     addToShortlist,
   } = useAppContext();
   
-  const [step, setStep] = useState<E_WorkflowStep | -1>(-1);
+  const [step, setStep] = useState<T_WorkflowStep | -1>(-1);
   const [selectedCandidateForModal, setSelectedCandidateForModal] = useState<I_CandidateWithScore | null>(null);
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -40,7 +43,7 @@ const ShortlistPage = () => {
       return;
     }
     
-    let initialStep: E_WorkflowStep;
+    let initialStep: T_WorkflowStep;
     
     if (shortlistedTeam.length > 0 && teamSize > 0) {
       initialStep = E_WorkflowStep.BUILDING;
