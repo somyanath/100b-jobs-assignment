@@ -50,7 +50,7 @@ const transformCandidate = (candidate: I_Candidate, index: number): I_CandidateW
  */
 const fetchCandidates = async (): Promise<ApiResponse<I_CandidateWithScore[]>> => {
   try {
-    const response = await fetch('/referenceData/candidatesData.json');
+    const response = await fetch('/resources/candidatesData.json');
     
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
@@ -65,7 +65,7 @@ const fetchCandidates = async (): Promise<ApiResponse<I_CandidateWithScore[]>> =
     
     // Transform candidates to include calculated fields
     // Also filter out candidates that don't have a name
-    const filteredData = rawData.filter(candidate => candidate.name);
+    const filteredData = rawData.filter(candidate => candidate.name && candidate.name !== '');
     const transformedData = filteredData.map((candidate, index) => 
       transformCandidate(candidate, index)
     );

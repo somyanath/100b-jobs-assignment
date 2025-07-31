@@ -3,15 +3,22 @@ import { useCallback, useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import RoleSlotPanel from "./RoleSlotPanel";
 import CandidateFilters, { type I_RoleFilters } from "./CandidateFilters";
+import CandidateSelectionArea from "./CandidateSelectionArea";
+import type { I_CandidateWithScore } from "@/types/Candidate";
+
+interface TeamBuilderProps {
+  onCandidateViewDetails: (candidate: I_CandidateWithScore) => void;
+}
 
 /**
  * Main team building component
  * Manages role selection, candidate filtering, and team assembly
  */
-const TeamBuilder = () => {
+const TeamBuilder = ({ onCandidateViewDetails }: TeamBuilderProps) => {
   const { 
     shortlistedTeam,
     teamSize,
+    addToShortlist
   } = useAppContext();
   
   // State management
@@ -29,6 +36,26 @@ const TeamBuilder = () => {
   }, [shortlistedTeam.length, teamSize]);
 
   // Event handlers
+  const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
+    if (activeRoleIndex < 0) return;
+
+    // Check if candidate is already selected for another role
+    const isAlreadySelected = shortlistedTeam.some((teamMember, index) => 
+      teamMember.id === candidate.id && index !== activeRoleIndex
+    );
+    
+    if (isAlreadySelected) return;
+
+    addToShortlist(candidate);
+    
+    // Auto-progress to next role
+    const nextRoleIndex = shortlistedTeam.length + 1 < teamSize 
+      ? shortlistedTeam.length + 1 
+      : -1;
+    
+    setActiveRoleIndex(nextRoleIndex);
+  }, [activeRoleIndex, shortlistedTeam, teamSize, addToShortlist]);
+
   const handleFilterChange = useCallback((filters: I_RoleFilters) => {
     setRoleFilters(filters);
   }, []);
@@ -151,7 +178,11 @@ const TeamBuilder = () => {
               </div>
 
               <div className="p-4">
-                {'Candidate selection area'}
+                <CandidateSelectionArea
+                  roleFilters={roleFilters}
+                  onCandidateSelect={handleCandidateSelect}
+                  onCandidateViewDetails={onCandidateViewDetails}
+                />
               </div>
             </div>
           </div>
