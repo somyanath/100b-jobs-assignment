@@ -1,6 +1,7 @@
 import { useAppContext } from "@/hooks/useAppContext";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
+import RoleSlotPanel from "./RoleSlotPanel";
 
 /**
  * Main team building component
@@ -51,7 +52,10 @@ const TeamBuilder = () => {
               </div>
 
               <div className="p-4">
-                {'Role slot panel'}
+                <RoleSlotPanel 
+                  activeRoleIndex={activeRoleIndex}
+                  onRoleSelect={setActiveRoleIndex}
+                />
               </div>
             </div>
 
