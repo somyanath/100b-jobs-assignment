@@ -3,6 +3,7 @@ import CandidatesDataTable from "./CandidatesDataTable";
 import type { I_RoleFilters } from "./CandidateFilters";
 import type { I_CandidateWithScore } from "@/types/Candidate";
 import { useCallback, useMemo } from "react";
+import { useCandidateScoreCache } from "@/hooks/useCandidateScoreCache";
 
 interface I_CandidateSelectionAreaProps {
   roleFilters: I_RoleFilters;
@@ -26,12 +27,13 @@ const CandidateSelectionArea = ({
   activeRoleIndex = -1
 }: I_CandidateSelectionAreaProps) => {
   const { candidates } = useAppContext();
+  const { getCachedScores } = useCandidateScoreCache();
 
   // Memoize filter criteria for stable dependencies
   const filterCriteria = useMemo(() => ({
-    skills: roleFilters.skills.join(','),
-    experience: roleFilters.experience.join(','),
-    education: roleFilters.education.join(','),
+    skills: roleFilters.skills,
+    experience: roleFilters.experience,
+    education: roleFilters.education,
     selectedIds: selectedCandidates.filter(c => c !== null).map(c => c.id).join(','),
     activeRoleIndex
   }), [roleFilters, selectedCandidates, activeRoleIndex]);
@@ -48,31 +50,31 @@ const CandidateSelectionArea = ({
       }
 
       // Skills filtering
-      if (roleFilters.skills.length > 0) {
+      if (filterCriteria.skills.length > 0) {
         const candidateSkills = candidate.skills?.map(skill => skill.toLowerCase()) || [];
-        const hasMatchingSkill = roleFilters.skills.some(filterSkill => 
+        const hasMatchingSkill = filterCriteria.skills.some(filterSkill => 
           candidateSkills.some(skill => skill.includes(filterSkill.toLowerCase()))
         );
         if (!hasMatchingSkill) return false;
       }
 
       // Experience filtering
-      if (roleFilters.experience.length > 0) {
+      if (filterCriteria.experience.length > 0) {
         const candidateExperience = candidate.work_experiences?.map(exp => 
           `${exp.roleName} ${exp.company}`.toLowerCase()
         ).join(' ') || '';
-        const hasMatchingExperience = roleFilters.experience.some(filterExp => 
+        const hasMatchingExperience = filterCriteria.experience.some(filterExp => 
           candidateExperience.includes(filterExp.toLowerCase())
         );
         if (!hasMatchingExperience) return false;
       }
 
       // Education filtering
-      if (roleFilters.education.length > 0) {
+      if (filterCriteria.education.length > 0) {
         const candidateEducation = candidate.education?.degrees?.map(degree => 
           `${degree.degree} ${degree.subject}`.toLowerCase()
         ).join(' ') || '';
-        const hasMatchingEducation = roleFilters.education.some(filterEdu => 
+        const hasMatchingEducation = filterCriteria.education.some(filterEdu => 
           candidateEducation.includes(filterEdu.toLowerCase())
         );
         if (!hasMatchingEducation) return false;
@@ -80,7 +82,11 @@ const CandidateSelectionArea = ({
 
       return true;
     });
-  }, [candidates, filterCriteria]);
+  }, [activeRoleIndex, filterCriteria.education, filterCriteria.experience, filterCriteria.skills, selectedCandidates]);
+
+  const filteredCandidatesWithScores = useMemo(() => {
+    return getCachedScores(filteredCandidates, filterCriteria);
+  }, [filteredCandidates, filterCriteria, getCachedScores]);
 
   const handleCandidateSelect = useCallback((candidate: I_CandidateWithScore) => {
     onCandidateSelect(candidate);
@@ -91,22 +97,22 @@ const CandidateSelectionArea = ({
   }, [onCandidateViewDetails]);
 
   // Computed values
-  const activeFiltersCount = roleFilters.skills.length + roleFilters.experience.length + roleFilters.education.length;
+  const activeFiltersCount = filterCriteria.skills.length + filterCriteria.experience.length + filterCriteria.education.length;
   const hasActiveFilters = activeFiltersCount > 0;
 
   // Filter summary text
   const filterSummaryText = useMemo(() => {
     if (!hasActiveFilters) {
-      return `Showing all ${filteredCandidates.length} candidates (no filters applied)`;
+      return `Showing all ${filteredCandidatesWithScores.length} candidates (no filters applied)`;
     }
     
     const filterParts = [];
-    if (roleFilters.skills.length > 0) filterParts.push(`${roleFilters.skills.length} skills`);
-    if (roleFilters.experience.length > 0) filterParts.push(`${roleFilters.experience.length} experience`);
-    if (roleFilters.education.length > 0) filterParts.push(`${roleFilters.education.length} education`);
+    if (filterCriteria.skills.length > 0) filterParts.push(`${filterCriteria.skills.length} skills`);
+    if (filterCriteria.experience.length > 0) filterParts.push(`${filterCriteria.experience.length} experience`);
+    if (filterCriteria.education.length > 0) filterParts.push(`${filterCriteria.education.length} education`);
     
-    return `Showing ${filteredCandidates.length} candidates matching ${activeFiltersCount} filter criteria`;
-  }, [hasActiveFilters, activeFiltersCount, roleFilters, filteredCandidates.length]);
+    return `Showing ${filteredCandidatesWithScores.length} candidates matching ${activeFiltersCount} filter criteria`;
+  }, [hasActiveFilters, activeFiltersCount, filterCriteria, filteredCandidatesWithScores.length]);
   
   return (
     <div className="space-y-4">
@@ -125,11 +131,11 @@ const CandidateSelectionArea = ({
           <div className="text-right">
             <div className="text-xs text-gray-500">Active filters:</div>
             <div className="text-xs text-blue-600">
-              {roleFilters.skills.length > 0 && `${roleFilters.skills.length} skills`}
-              {roleFilters.skills.length > 0 && (roleFilters.experience.length > 0 || roleFilters.education.length > 0) && ', '}
-              {roleFilters.experience.length > 0 && `${roleFilters.experience.length} experience`}
-              {roleFilters.experience.length > 0 && roleFilters.education.length > 0 && ', '}
-              {roleFilters.education.length > 0 && `${roleFilters.education.length} education`}
+              {filterCriteria.skills.length > 0 && `${filterCriteria.skills.length} skills`}
+              {filterCriteria.skills.length > 0 && (filterCriteria.experience.length > 0 || filterCriteria.education.length > 0) && ', '}
+              {filterCriteria.experience.length > 0 && `${filterCriteria.experience.length} experience`}
+              {filterCriteria.experience.length > 0 && filterCriteria.education.length > 0 && ', '}
+              {filterCriteria.education.length > 0 && `${filterCriteria.education.length} education`}
             </div>
           </div>
         )}
@@ -137,7 +143,7 @@ const CandidateSelectionArea = ({
 
       {/* Candidates DataTable */}
       <CandidatesDataTable
-        candidates={filteredCandidates}
+        candidates={filteredCandidatesWithScores}
         onViewDetails={handleViewDetails}
         onSelectForTeam={handleCandidateSelect}
         showSelectButtons={showSelectButtons}

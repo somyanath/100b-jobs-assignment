@@ -32,14 +32,6 @@ export interface I_Education {
 }
 
 /**
- * Salary expectations by work type
- */
-export interface I_SalaryExpectation {
-  'full-time'?: string;
-  'part-time'?: string;
-}
-
-/**
  * Base candidate type matching the JSON data structure
  */
 export interface I_Candidate {
@@ -53,29 +45,6 @@ export interface I_Candidate {
   work_experiences: I_WorkExperience[];
   education: I_Education;
   skills: string[];
-}
-
-/**
- * Filter state for candidate search and filtering
- */
-export interface I_FilterState {
-  search: string;
-  workAvailability: string;
-  selectedRoles: string[];
-  selectedDegrees: string[];
-  selectedSkills: string[];
-  salaryRange?: {
-    min: number;
-    max: number;
-  };
-}
-
-/**
- * Sorting configuration
- */
-export interface I_SortState {
-  field: keyof I_Candidate | 'score';
-  direction: 'asc' | 'desc';
 }
 
 /**

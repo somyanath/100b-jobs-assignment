@@ -1,5 +1,5 @@
 import type { I_CandidateWithScore } from "@/types/Candidate";
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "../ui/dialog";
 import { Briefcase, Calendar, Clock, GraduationCap, Mail, MapPin, Phone } from "lucide-react";
 import { Badge } from "../ui/badge";
@@ -49,6 +49,18 @@ const CandidateModal = ({
       onClose();
     }
   }, [onSelect, candidate, onClose]);
+
+  const scoreBackgroundColor = useMemo(() => {
+    if (!candidate.score) return 'rgba(156, 163, 175, 0.5)'; // Gray for no score
+    const intensity = Math.min((candidate.score || 0) / 10, 1);
+    return `rgba(59, 130, 246, ${intensity})`;
+  }, [candidate.score]);
+
+  const hasScoringDetails = useMemo(() => {
+    return candidate.skillMatchPercentage !== undefined || 
+           candidate.experienceMatchPercentage !== undefined ||
+           candidate.educationMatchPercentage !== undefined;
+  }, [candidate.skillMatchPercentage, candidate.experienceMatchPercentage, candidate.educationMatchPercentage]);
   
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -67,6 +79,7 @@ const CandidateModal = ({
                 <div className="text-xs text-gray-500 mb-1">Match Score</div>
                 <div 
                   className="inline-flex items-center justify-center px-3 py-1 rounded-full text-white font-semibold text-sm"
+                  style={{ backgroundColor: scoreBackgroundColor }}
                 >
                   {candidate.score.toFixed(1)}
                 </div>
@@ -202,11 +215,34 @@ const CandidateModal = ({
           </div>
 
           {/* Scoring Details */}
-          {true && (
+          {hasScoringDetails && (
             <div className="bg-blue-50 rounded-lg p-4">
               <h3 className="font-semibold text-gray-900 mb-3">Scoring Breakdown</h3>
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
-                "Scoring details here"
+                {candidate.skillMatchPercentage !== undefined && (
+                  <div>
+                    <div className="text-gray-600">Skill Score</div>
+                    <div className="font-semibold text-blue-700">
+                      {candidate.skillMatchPercentage.toFixed(1)}%
+                    </div>
+                  </div>
+                )}
+                {candidate.experienceMatchPercentage !== undefined && (
+                  <div>
+                    <div className="text-gray-600">Experience Score</div>
+                    <div className="font-semibold text-blue-700">
+                      {candidate.experienceMatchPercentage.toFixed(1)}%
+                    </div>
+                  </div>
+                )}
+                {candidate.educationMatchPercentage && candidate.educationWeight && (
+                  <div>
+                    <div className="text-gray-600">Education Score</div>
+                    <div className="font-semibold text-blue-700">
+                      {(candidate.educationMatchPercentage * candidate.educationWeight).toFixed(1)}%
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
           )}

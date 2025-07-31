@@ -1,5 +1,5 @@
 import type { I_CandidateWithScore } from "@/types/Candidate";
-import { flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type PaginationState } from "@tanstack/react-table";
+import { flexRender, getCoreRowModel, getPaginationRowModel, getSortedRowModel, useReactTable, type ColumnDef, type PaginationState, type SortingState } from "@tanstack/react-table";
 import { useCallback, useMemo, useState } from "react";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
@@ -14,6 +14,20 @@ interface I_CandidatesDataTableProps {
   showSelectButtons?: boolean;
 }
 
+// Score visualization helper
+const getScoreBackgroundColor = (score: number): string => {
+  if (score >= 9) return 'bg-green-700 text-white';
+  if (score >= 8) return 'bg-green-600 text-white';
+  if (score >= 7) return 'bg-green-500 text-white';
+  if (score >= 6) return 'bg-green-400 text-black';
+  if (score >= 5) return 'bg-yellow-400 text-black';
+  if (score >= 4) return 'bg-yellow-300 text-black';
+  if (score >= 3) return 'bg-orange-300 text-black';
+  if (score >= 2) return 'bg-orange-400 text-black';
+  if (score >= 1) return 'bg-red-400 text-white';
+  return 'bg-red-500 text-white';
+};
+
 /**
  * Candidates data table component
  * Displays candidates in a sortable, paginated table with actions
@@ -24,6 +38,9 @@ const CandidatesDataTable = ({
   onSelectForTeam, 
   showSelectButtons = true 
 }: I_CandidatesDataTableProps) => {
+  const [sorting, setSorting] = useState<SortingState>([
+    { id: 'score', desc: true }
+  ]);
   const [pagination, setPagination] = useState<PaginationState>({
     pageIndex: 0,
     pageSize: 10,
@@ -58,7 +75,7 @@ const CandidatesDataTable = ({
         const score = row.getValue('score') as number;
         return (
           <div className="ml-4">
-            <span className={`inline-block px-2 py-1 rounded text-sm font-medium`}>
+            <span className={`inline-block px-2 py-1 rounded text-sm font-medium ${getScoreBackgroundColor(score)}`}>
               {score?.toFixed(1) || 'N/A'}
             </span>
           </div>
@@ -180,7 +197,9 @@ const CandidatesDataTable = ({
     getPaginationRowModel: getPaginationRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onPaginationChange: setPagination,
+    onSortingChange: setSorting,
     state: {
+      sorting,
       pagination,
     },
   });
