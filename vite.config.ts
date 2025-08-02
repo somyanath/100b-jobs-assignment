@@ -21,4 +21,14 @@ export default defineConfig({
       reporter: ['text', 'json', 'html'],
     },
   },
+  build: {
+    rollupOptions: {
+      input: {
+        main: path.resolve(__dirname, 'index.html'),
+      },
+    },
+  },
+  server: {
+    historyApiFallback: true,
+  },
 } as ViteUserConfig)
